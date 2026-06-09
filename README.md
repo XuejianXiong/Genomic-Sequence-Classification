@@ -124,7 +124,7 @@ Future work will extend this framework to:
 ## 6. Installation
 
 ```
-git clone <repo>
+git clone https://github.com/XuejianXiong/Genomic-Sequence-Classification.git
 
 cd Genomic-Sequence-Classification
 
@@ -137,4 +137,39 @@ python3 -m experiments.Transformer
 ```
 
 ---
+## 7. Project Structure
 
+```
+genomic-sequence-classification/
+│
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── data/
+│   ├── easy.csv
+│   ├── medium.csv
+│   ├── realistic.csv
+│   └── noisy.csv
+│
+├── outputs/
+│
+├── src/
+│   ├── datasets.py
+│   ├── model.py
+│   ├── metrics.py
+│   ├── plots.py
+│   └── utils.py
+│
+├── experiments/
+│   ├── Generate_SeqData.py
+│   └── Transformer.py
+│
+└── LICENSE
+```
+
+---
+## 8. License
+MIT License – feel free to use, adapt, and share.
+
+---
