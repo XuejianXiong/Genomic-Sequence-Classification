@@ -56,11 +56,14 @@ The project supports three fine-tuning strategies:
 
 ## Results Summary
 
-| Tuning Strategy | Trainable Params | Test Accuracy | ROC-AUC | PR-AUC | Training Time |
-|----------------|------------------|--------------|---------|--------|---------------|
-| Frozen | ~0.6M | 0.56 | 0.57 | 0.57 | ~2 min |
-| Partial (last 2 layers) | ~14.8M | 0.87 | 0.94 | 0.94 | ~3–5 min |
-| Full fine-tuning | ~89M | TBD | TBD | TBD | overnight |
+| Tuning Strategy | Trainable Params | Validation Accuracy | Test Accuracy | Test ROC-AUC | Test PR-AUC | Training Time |
+|----------------|------------------|--------------|--------------|---------|--------|---------------|
+| Frozen | ~0.6M | 0.56 | 0.52 | 0.53 | 0.52 | ~1.7 min |
+| Partial (last 2 layers) | ~14.8M | 0.84 | 0.88 | 0.95 | 0.95 | ~3.3 min |
+| Partial (last 4 layers) | ~28.9M | 0.82 | 0.83 | 0.91 | 0.90 | ~4.7 min |
+| Full fine-tuning | ~89.8M | 0.5 | 0.5 | 0.5 | 0.5 | ~81.6 min |
+
+
 
 ---
 
