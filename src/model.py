@@ -72,7 +72,10 @@ class DNAClassifier(pl.LightningModule):
             attention_mask = attention_mask
             )
         
-        cls_emb = output.last_hidden_state[:,0,:]
+        #cls_emb = output.last_hidden_state[:,0,:]
+        hidden = output.last_hidden_state
+        cls_emb = torch.max(hidden, dim=1).values
+
         logits = self.classifier(cls_emb)
 
         return logits

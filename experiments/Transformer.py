@@ -51,14 +51,15 @@ def main():
     model_name = "zhihan1996/DNA_bert_6"
     #model_name = "Peltarion/dnabert-minilm-small"
 
-    tuning_value = 1          # 0, -2, -4, -6, 1
-    input_data = "easy"      # easy, medium, realistic, noisy, grammar
+    tuning_value = -2          # 0, -2, -4, -6, 1
+    input_data = "encode_dataset"      # easy, medium, realistic, noisy, grammar, grammar_proper, grammar_proper_tf, encode_dataset
     output_path = f"outputs/{input_data}"
+    batch_size = 8
 
     data_module = DNADataModule(
         csv_file=f"data/{input_data}.csv",
         tokenizer_name=model_name,
-        batch_size=64
+        batch_size=batch_size
     )
     
     model = DNAClassifier(model_name=model_name, tuning=tuning_value)

@@ -83,7 +83,7 @@ class DNADataModule(pl.LightningDataModule):
             dataset, 
             [train_size, test_size],
             generator=generator
-            )
+        )
 
         val_size = int(0.2 * train_size)
         train_size = train_size - val_size
@@ -92,11 +92,15 @@ class DNADataModule(pl.LightningDataModule):
             train_data,
             [train_size, val_size],
             generator=generator
-            )
+        )
         self.test_data = test_data
     '''
     def setup(self, stage = None):
-        dataset = DNASequenceDataset(self.csv_file, self.tokenizer_name)
+        dataset = DNASequenceDataset(
+            self.csv_file, 
+            self.tokenizer_name, 
+            max_len=256
+        )
 
         labels = dataset.labels
         indices = np.arange(len(dataset))
@@ -134,25 +138,25 @@ class DNADataModule(pl.LightningDataModule):
             self.train_data, 
             batch_size=self.batch_size, 
             shuffle=True,
-            num_workers=4,
+            num_workers=2,
             persistent_workers=True
-            )
+        )
     
     def val_dataloader(self):
         return DataLoader(
             self.val_data, 
             batch_size=self.batch_size, 
             shuffle=False,
-            num_workers=4,
+            num_workers=2,
             persistent_workers=True
-            )
+        )
     
     def test_dataloader(self):
         return DataLoader(
             self.test_data, 
             batch_size=self.batch_size, 
             shuffle=False,
-            num_workers=4,
+            num_workers=2,
             persistent_workers=True
-            )
+        )
     
