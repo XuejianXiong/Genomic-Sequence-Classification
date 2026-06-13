@@ -200,6 +200,17 @@ Example performance obtained using chromosome-wise evaluation:
 
 The model successfully captures sequence-level regulatory signatures associated with individual cell types despite being trained solely on DNA sequence.
 
+The model achieves strong performance on DHS classification.
+
+### ROC Curve
+![ROC Curve](outputs/dhs/test_roc_curve.png)
+
+### Precision-Recall Curve
+![PR Curve](outputs/dhs/test_pr_curve.png)
+
+### Confusion Matrix
+![Confusion Matrix](outputs/dhs/test_confusion_matrix.png)
+
 ---
 
 ## Limitations
