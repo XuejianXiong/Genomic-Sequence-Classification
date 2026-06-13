@@ -26,6 +26,8 @@ env/
 # PyTorch / ML outputs
 # =========================
 outputs/
+!outputs/dhs/*.png
+!outputs/dhs/experiment_summary.csv
 checkpoints/
 *.pt
 *.pth
