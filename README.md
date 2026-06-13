@@ -26,13 +26,9 @@ The primary goals were:
 
 ### DHS Index
 
-Data were obtained from:
-
-Meuleman et al. (2020) "Index and biological spectrum of human DNase I hypersensitive sites."
-
 The DHS Index contains approximately 3.6 million regulatory elements derived from hundreds of human tissues and cell types.
 
-Dataset: https://www.meuleman.org/research/dhsindex/
+Data were obtained from [meuleman.org](https://www.meuleman.org/research/dhsindex/) . 
 
 ---
 
@@ -77,11 +73,7 @@ The resulting dataset contains:
 
 ### Foundation Model
 
-This project uses:
-
-**DNABERT-6**
-
-A transformer language model pretrained on genomic sequences using 6-mer tokenization.
+This project uses: **DNABERT-6**,  a transformer language model pretrained on genomic sequences using 6-mer tokenization.
 
 ---
 
@@ -90,14 +82,11 @@ A transformer language model pretrained on genomic sequences using 6-mer tokeniz
 Input DNA sequences are converted into overlapping 6-mers before tokenization.
 
 Example:
+```
+DNA:  ATCGTACG
 
-DNA:
-
-ATCGTACG
-
-6-mers:
-
-ATCGTA TCGTAC CGTACG
+6-mers:   ATCGTA TCGTAC CGTACG
+```
 
 The pretrained DNABERT encoder is fine-tuned using a classification head consisting of:
 
