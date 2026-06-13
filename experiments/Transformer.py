@@ -34,7 +34,14 @@ from torchmetrics.classification import (
 from src.utils import count_trainable_params, count_total_params
 from src.datasets import DNADataModule
 from src.model import DNAClassifier
-from src.plots import plot_confusion_matrix, plot_pr_curve, plot_roc
+from src.plots import (
+    plot_roc,
+    plot_pr_curve,
+    plot_confusion_matrix,
+    plot_multiclass_roc, 
+    plot_multiclass_pr, 
+    plot_multiclass_confusion_matrix
+)
 
 
 generator = torch.Generator().manual_seed(42)
@@ -52,21 +59,51 @@ def main():
     #model_name = "Peltarion/dnabert-minilm-small"
 
     tuning_value = -2          # 0, -2, -4, -6, 1
-    input_data = "encode_dataset"      # easy, medium, realistic, noisy, grammar, grammar_proper, grammar_proper_tf, encode_dataset
-    output_path = f"outputs/{input_data}"
     batch_size = 8
+    data_type = "dhs"        #"synthetic"
+    input_data = "easy"      # easy, medium, realistic, noisy, grammar, grammar_proper, grammar_proper_tf, encode_dataset
+    
+    if data_type == "synthetic":
+        split_mode = "random"
+        input_file = f"data/{input_data}.csv"
+        train_chroms = None
+        val_chroms   = None
+        test_chroms  = None
+    elif data_type == "dhs":
+        split_mode = "chromosome"
+        input_data = 'dhs'
+        input_file = "data/filtered_dataset.txt"
+        train_chroms = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8"],
+        val_chroms   = ["chr9", "chr10"],
+        test_chroms  = ["chr11", "chr12"],
+
+    output_path = f"outputs/{input_data}"
 
     data_module = DNADataModule(
-        csv_file=f"data/{input_data}.csv",
+        csv_file=input_file,
         tokenizer_name=model_name,
-        batch_size=batch_size
+        data_type=data_type,
+        batch_size=batch_size,
+        split_mode=split_mode,
+        train_chroms = train_chroms,
+        val_chroms   = val_chroms,
+        test_chroms  = test_chroms,
     )
-    
-    model = DNAClassifier(model_name=model_name, tuning=tuning_value)
+
+    data_module.setup()
+
+    num_classes = data_module.num_classes
+    class_names = data_module.class_names    
+    print(class_names)
+
+    model = DNAClassifier(
+        model_name=model_name,
+        num_classes=num_classes,
+        tuning=tuning_value
+    )
 
     trainable_params = count_trainable_params(model)
     total_params = count_total_params(model)      
-
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"{output_path}/checkpoints",
@@ -96,20 +133,25 @@ def main():
         check_val_every_n_epoch=2,
     )
 
+    # timing start
     train_start = time.time()
+    # run training and validating
     trainer.fit(model, data_module)
+    # timing stop
     train_end = time.time()
 
     best_val_metrics = model.best_val_metrics.copy()
 
+    # save the best model
     best_model_path = checkpoint_callback.best_model_path
     best_model = DNAClassifier.load_from_checkpoint(best_model_path)
-
     best_model.transformer.save_pretrained(f"{output_path}/model")
 
+    # save the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.save_pretrained(f"{output_path}/tokenizer")
 
+    # run testing
     metrics = trainer.test(best_model, datamodule=data_module)[0]
     print(metrics)
     '''
@@ -119,43 +161,71 @@ def main():
     )
     '''
 
+    # extract the inference results of the testing data
     # detach() Remove gradient tracking
     # cpu() Move to CPU memory because numpy() only works on CPU memory
+    ids = np.array(best_model.test_ids)
     probs = best_model.test_probs.detach().cpu().numpy()
     labels = best_model.test_labels.detach().cpu().numpy()
-    preds = (probs > 0.5).astype(int)
+    preds = probs.argmax(axis=1)
 
     print(
-          classification_report(
-              labels,
-              preds,
-              target_names=['non-enhancer','enhancer']
-          )
+        classification_report(
+            labels,
+            preds,
+            target_names=class_names,
+            digits=4
+        )
     )
 
+    print("Probability matrix shape:", probs.shape)
     print("Min prob:", probs.min())
     print("Max prob:", probs.max())
     print("Mean prob:", probs.mean())
 
+    # save the prediction results to a csv file
     output_df = pd.DataFrame({
-        "true_label": np.where(
-            labels == 1,
-            "enhancer",
-            "non-enhancer"
-        ),
-        "predicted_label": np.where(
-            preds == 1,
-            "enhancer",
-            "non-enhancer"
-        ),
-        "probability_enhancer": probs
+        "id": ids,
+        "true_label": [class_names[i] for i in labels],
+        "predicted_label": [class_names[i] for i in preds],
+        "confidence": probs.max(axis=1)
     })
-    output_df.to_csv(f"{output_path}/test_predictions.csv", index=False)
+    for i, name in enumerate(class_names):
+        output_df[f"prob_{name}"] = probs[:, i]
 
-    plot_roc(probs, labels, f"{output_path}/test_roc_curve.png")
-    plot_pr_curve(probs, labels, f"{output_path}/test_pr_curve.png")
-    plot_confusion_matrix(preds, labels, f"{output_path}/test_confusion_matrix.png")
+    output_df.to_csv(
+        f"{output_path}/test_predictions.csv",
+        index=False
+    )
 
+    # plot figures
+    if num_classes == 2:
+        plot_roc(probs[:, 1], labels, f"{output_path}/test_roc_curve.png")
+        plot_pr_curve(probs[:, 1], labels, f"{output_path}/test_pr_curve.png")
+        plot_confusion_matrix(preds, labels, f"{output_path}/test_confusion_matrix.png")
+    elif num_classes > 2:
+        plot_multiclass_roc(
+            probs,
+            labels,
+            class_names,
+            f"{output_path}/test_roc_curve.png"
+        )
+
+        plot_multiclass_pr(
+            probs,
+            labels,
+            class_names,
+            f"{output_path}/test_pr_curve.png"
+        )
+
+        plot_multiclass_confusion_matrix(
+            preds,
+            labels,
+            class_names,
+            f"{output_path}/test_confusion_matrix.png"
+        )
+
+    # show the modelling performace
     if tuning_value == 1:
         tuning_name = "full"
     elif tuning_value == 0:
@@ -172,6 +242,8 @@ def main():
     print(f"Total Running Time: {(end_time - start_time)/60:.2f} minutes")
     print("=" * 60)
     
+
+    # save total statistics into a csv file
     result = {
         "tuning": tuning_name,
         "trainable_params": trainable_params,
